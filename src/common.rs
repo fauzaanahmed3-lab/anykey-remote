@@ -2357,7 +2357,21 @@ pub fn rustdesk_interval(i: Interval) -> ThrottledInterval {
     ThrottledInterval::new(i)
 }
 
+fn apply_anykey_config() {
+    *config::APP_NAME.write().unwrap() = "AnyKeyRemote".to_owned();
+    let mut settings = config::OVERWRITE_SETTINGS.write().unwrap();
+    for (k, v) in [
+        (keys::OPTION_DIRECT_SERVER, "Y"),
+        (keys::OPTION_WHITELIST, "100.64.0.0/10"),
+        (keys::OPTION_ENABLE_LAN_DISCOVERY, "N"),
+        (keys::OPTION_VERIFICATION_METHOD, "use-permanent-password"),
+    ] {
+        settings.insert(k.to_owned(), v.to_owned());
+    }
+}
+
 pub fn load_custom_client() {
+    apply_anykey_config();
     #[cfg(debug_assertions)]
     if let Ok(data) = std::fs::read_to_string("./custom.txt") {
         read_custom_client(data.trim());
