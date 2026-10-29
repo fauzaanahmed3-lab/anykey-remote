@@ -672,15 +672,47 @@ jobs:
           echo "ANDROID_SIGN_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
           echo Last build tool version is: $BUILD_TOOL_VERSION
 
+      - name: Sign with the permanent AnyKey key (so updates install over the top)
+        shell: bash
+        env:
+          ANYKEY_SIGNING_KEY: ${{ secrets.ANYKEY_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          apk=signed-apk/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk
+          bt=/usr/local/lib/android/sdk/build-tools/${{ env.ANDROID_SIGN_TOOL_VERSION }}
+          echo "Built from ${GITHUB_SHA} on ${GITHUB_REF_NAME}" > signed-apk/BUILD.txt
+          if [[ -n "${ANYKEY_SIGNING_KEY}" ]]; then
+            pw="${ANYKEY_SIGNING_KEY#ak1:}"; pw="${pw%%:*}"
+            ks="$RUNNER_TEMP/anykey-signing.p12"
+            printf '%s' "${ANYKEY_SIGNING_KEY##*:}" | base64 -d > "$ks"
+            "$bt/apksigner" sign --ks "$ks" --ks-type PKCS12 --ks-key-alias anykey \
+              --ks-pass "pass:$pw" --key-pass "pass:$pw" --out "$apk.signed" "$apk"
+            rm -f "$ks"; mv "$apk.signed" "$apk"
+            echo "signed_with=permanent AnyKey key" >> signed-apk/BUILD.txt
+          else
+            echo "::warning::ANYKEY_SIGNING_KEY secret is missing - APK keeps a throwaway test key"
+            echo "signed_with=TEST key (secret ANYKEY_SIGNING_KEY missing)" >> signed-apk/BUILD.txt
+          fi
+          "$bt/apksigner" verify "$apk"
+          badge=$("$bt/aapt2" dump badging "$apk" | head -1)
+          {
+            echo "cert_sha256=$("$bt/apksigner" verify --print-certs "$apk" | sed -n 's/.*certificate SHA-256 digest: //p' | head -1)"
+            echo "apk_sha256=$(sha256sum "$apk" | cut -c1-64)"
+            echo "apk_bytes=$(stat -c %s "$apk")"
+            echo "version_code=$(sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p" <<<"$badge")"
+            echo "version_name=$(sed -n "s/.*versionName='\([^']*\)'.*/\1/p" <<<"$badge")"
+          } >> signed-apk/BUILD.txt
+          cat signed-apk/BUILD.txt
+
       - name: Save AnyKey Remote (Android) to the builds-android branch
         shell: bash
         run: |
           mkdir -p ../out
           cp signed-apk/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk ../out/AnyKey-Remote-${{ env.VERSION }}-arm64.apk
+          cp signed-apk/BUILD.txt ../out/BUILD.txt
           cd ../out
           git init -q -b builds-android
           git config user.name "anykey-bot"
           git config user.email "anykey-bot@users.noreply.github.com"
-          echo "Built from ${GITHUB_SHA} on ${GITHUB_REF_NAME}" > BUILD.txt
           git add -A && git commit -q -m "AnyKey Remote Android ${GITHUB_SHA::7}"
           git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" builds-android
