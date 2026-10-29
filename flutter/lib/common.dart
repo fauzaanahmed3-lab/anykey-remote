@@ -699,6 +699,9 @@ String formatDurationToTime(Duration duration) {
   return "${totalTime.toString().padLeft(2, "0")}:${mins.toString().padLeft(2, "0")}:${secs.toString().padLeft(2, "0")}";
 }
 
+/// AnyKey: a session opened from the AnyKey app (link has ?anykey) goes back to AnyKey when it ends.
+bool anykeyReturnAfterSession = false;
+
 closeConnection({String? id}) {
   if (isAndroid || isIOS) {
     () async {
@@ -707,6 +710,10 @@ closeConnection({String? id}) {
       gFFI.chatModel.hideChatOverlay();
       Navigator.popUntil(globalKey.currentContext!, ModalRoute.withName("/"));
       stateGlobal.isInMainPage = true;
+      if (anykeyReturnAfterSession) {
+        anykeyReturnAfterSession = false;
+        SystemNavigator.pop();
+      }
     }();
   } else {
     if (isWeb) {
@@ -2482,6 +2489,7 @@ List<String>? urlLinkToCmdArgs(Uri uri) {
   }
 
   if (isMobile && id != null) {
+    anykeyReturnAfterSession = queryParameters.containsKey("anykey");
     final forceRelay = queryParameters["relay"] != null;
     final password = queryParameters["password"];
 
