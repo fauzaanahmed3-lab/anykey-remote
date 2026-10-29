@@ -702,6 +702,10 @@ String formatDurationToTime(Duration duration) {
 /// AnyKey: a session opened from the AnyKey app (link has ?anykey) goes back to AnyKey when it ends.
 bool anykeyReturnAfterSession = false;
 
+/// AnyKey: open the phone keyboard as soon as the PC's screen shows (link has ?keyboard), so the
+/// Windows PIN can be typed straight away when the PC locked itself for this session.
+bool anykeyOpenKeyboard = false;
+
 closeConnection({String? id}) {
   if (isAndroid || isIOS) {
     () async {
@@ -2490,6 +2494,7 @@ List<String>? urlLinkToCmdArgs(Uri uri) {
 
   if (isMobile && id != null) {
     anykeyReturnAfterSession = queryParameters.containsKey("anykey");
+    anykeyOpenKeyboard = queryParameters.containsKey("keyboard");
     final forceRelay = queryParameters["relay"] != null;
     final password = queryParameters["password"];
 

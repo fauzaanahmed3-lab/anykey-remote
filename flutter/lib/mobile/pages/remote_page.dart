@@ -122,6 +122,12 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
       }
       _disableAndroidSoftKeyboard(
           isKeyboardVisible: keyboardVisibilityController.isVisible);
+      if (anykeyOpenKeyboard) {
+        anykeyOpenKeyboard = false;
+        Timer(const Duration(milliseconds: 1200), () {
+          if (mounted) openKeyboard();
+        });
+      }
     });
     WidgetsBinding.instance.addObserver(this);
 
