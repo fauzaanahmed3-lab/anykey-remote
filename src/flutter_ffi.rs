@@ -3048,6 +3048,30 @@ pub mod server_side {
         return env.new_string(res).unwrap_or_default().into_raw();
     }
 
+    /// AnyKey: the AnyKey app (same signing key) sets this device's permanent password.
+    #[no_mangle]
+    pub unsafe extern "system" fn Java_ffi_FFI_anykeySetPassword(
+        env: JNIEnv,
+        _class: JClass,
+        app_dir: JString,
+        password: JString,
+    ) -> jboolean {
+        let mut env = env;
+        if config::APP_DIR.read().unwrap().is_empty() {
+            if let Ok(app_dir) = env.get_string(&app_dir) {
+                *config::APP_DIR.write().unwrap() = app_dir.into();
+            }
+        }
+        let Ok(password) = env.get_string(&password) else {
+            return jboolean::from(false);
+        };
+        let password: String = password.into();
+        if password.len() < 8 {
+            return jboolean::from(false);
+        }
+        jboolean::from(config::Config::set_permanent_password(&password))
+    }
+
     #[no_mangle]
     pub unsafe extern "system" fn Java_ffi_FFI_isServiceClipboardEnabled(
         env: JNIEnv,

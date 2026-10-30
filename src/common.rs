@@ -2368,11 +2368,6 @@ fn apply_anykey_config() {
     ] {
         settings.insert(k.to_owned(), v.to_owned());
     }
-    #[cfg(target_os = "android")]
-    config::HARD_SETTINGS
-        .write()
-        .unwrap()
-        .insert("conn-type".to_owned(), "outgoing".to_owned());
 }
 
 pub fn load_custom_client() {
