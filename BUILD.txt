@@ -1,0 +1,7 @@
+Built from 37cc4bcf54938d8ec66d47cbbce992fbb3fa9f33 on anykey
+signed_with=permanent AnyKey key
+cert_sha256=936b52846ac1f877bda6022f96ea841088f9f92b28dddc5135f3bdfad0ed9770
+apk_sha256=ad59b34d8e14717f0d63667f7c031f62ae07fa023a5dd01c7492663d330e41bf
+apk_bytes=28696712
+version_code=2071
+version_name=1.5.0
