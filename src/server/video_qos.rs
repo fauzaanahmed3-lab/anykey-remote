@@ -271,7 +271,7 @@ struct UserData {
 impl UserData {
     // The frame rate this viewer asked for, from its custom or auto-adjust limit.
     fn fps_cap(&self) -> u32 {
-        let mut fps = self.custom_fps.unwrap_or(FPS);
+        let mut fps = self.custom_fps.unwrap_or(MAX_FPS);
         if let Some(auto_adjust_fps) = self.auto_adjust_fps {
             if fps == 0 || auto_adjust_fps < fps {
                 fps = auto_adjust_fps;
